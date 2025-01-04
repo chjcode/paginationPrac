@@ -28,6 +28,7 @@ public class CommentService {
                 .orElseThrow(() -> new NoSuchElementException("Board Not Found"));
         Comment parentComment = getParentCommentById(requestDto.parentId());
         Comment comment = requestDto.toEntity(board, parentComment);
+
         commentDao.save(comment);
     }
 
