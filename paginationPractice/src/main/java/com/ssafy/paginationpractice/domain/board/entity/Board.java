@@ -24,7 +24,7 @@ public class Board extends BaseTimeEntity {
     @Column(columnDefinition = "TEXT")
     private String content;
 
-    @OneToMany(mappedBy = "Board")
+    @OneToMany(mappedBy = "board")
     private List<Comment> comments = new ArrayList<>();
 
     @Builder

@@ -17,19 +17,30 @@ import java.util.Optional;
 
 @Service
 @Slf4j
-@Transactional
 @RequiredArgsConstructor
 public class CommentService {
     private final CommentDao commentDao;
     private final BoardDao boardDao;
 
-    public void save(CommentSaveRequestDto commentSaveRequestDto) throws NoSuchElementException {
-        Board board = boardDao.findById(commentSaveRequestDto.boardId())
+    @Transactional
+    public void save(Long boardId, CommentSaveRequestDto requestDto) {
+        Board board = boardDao.findById(boardId)
                 .orElseThrow(() -> new NoSuchElementException("Board Not Found"));
-        Comment parent = commentDao.findById(commentSaveRequestDto.parentId())
-                .orElseThrow(() -> new NoSuchElementException("Parent Not Found"));
-        Comment comment = commentSaveRequestDto.toEntity(board, parent);
+        Comment parentComment = getParentCommentById(requestDto.parentId());
+        Comment comment = requestDto.toEntity(board, parentComment);
         commentDao.save(comment);
+    }
+
+    private Comment getParentCommentById(Long id) {
+        if (id == null) {
+            return null;
+        }
+        return getCommentById(id);
+    }
+
+    private Comment getCommentById(Long id) {
+        return commentDao.findById(id)
+                .orElseThrow(() -> new RuntimeException("댓글이 없습니다."));
     }
 
     public Page<Comment> findByBoardId(Long boardId, Pageable pageable) {

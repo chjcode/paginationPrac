@@ -4,7 +4,6 @@ import com.ssafy.paginationpractice.domain.board.entity.Board;
 import com.ssafy.paginationpractice.domain.comment.entity.Comment;
 
 public record CommentSaveRequestDto(
-        Long boardId,
         String content,
         Long parentId
 ) {
