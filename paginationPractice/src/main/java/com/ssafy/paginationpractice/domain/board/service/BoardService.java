@@ -1,13 +1,18 @@
 package com.ssafy.paginationpractice.domain.board.service;
 
 import com.ssafy.paginationpractice.domain.board.dao.BoardDao;
+import com.ssafy.paginationpractice.domain.board.dto.BoardPreviewDto;
 import com.ssafy.paginationpractice.domain.board.dto.BoardSaveRequestDto;
 import com.ssafy.paginationpractice.domain.board.dto.BoardSaveResponseDto;
 import com.ssafy.paginationpractice.domain.board.entity.Board;
 import com.ssafy.paginationpractice.domain.comment.dao.CommentDao;
 import com.ssafy.paginationpractice.domain.comment.entity.Comment;
+import java.util.Map;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,6 +42,7 @@ public class BoardService {
         Board board = getBoardById(boardId);
 
         removeBoardComments(board);
+        removeBoard(board);
     }
 
     @Transactional
@@ -44,7 +50,30 @@ public class BoardService {
         Board board = getBoardById(boardId);
 
         removeBoardCommentsInBatch(board);
+        removeBoard(board);
     }
+
+    @Transactional
+    public Page<BoardPreviewDto> findAll(Pageable pageable) {
+        Page<Board> boardPage = boardDao.findBoardWithPaging(pageable);
+
+        List<Long> boardIds = boardPage.getContent()
+                .stream()
+                .map(Board::getId)
+                .toList();
+
+        List<Board> boardsWithComments = boardDao.findBoardWithCommentsByIds(boardIds);
+
+        Map<Long, Board> boardMap = boardsWithComments.stream()
+                .collect(Collectors.toMap(Board::getId, b -> b));
+
+        return boardPage.map(board -> {
+            Board boardEntity = boardMap.get(board.getId());
+            int commentCount = boardEntity.getComments().size();
+            return BoardPreviewDto.from(board, commentCount);
+        });
+    }
+
 
     private Board saveBoard(BoardSaveRequestDto requestDto) {
         Board board = boardDao.save(requestDto.toEntity());
@@ -74,5 +103,9 @@ public class BoardService {
     private void removeBoardCommentsInBatch(Board board) {
         List<Comment> comments = board.getComments();
         commentDao.deleteInBatch(comments);
+    }
+
+    private void removeBoard(Board board) {
+        boardDao.delete(board);
     }
 }
