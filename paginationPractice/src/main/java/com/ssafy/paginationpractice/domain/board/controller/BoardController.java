@@ -1,9 +1,13 @@
 package com.ssafy.paginationpractice.domain.board.controller;
 
+import com.ssafy.paginationpractice.domain.board.dto.BoardPaginatedResponseDto;
+import com.ssafy.paginationpractice.domain.board.dto.BoardPreviewDto;
 import com.ssafy.paginationpractice.domain.board.dto.BoardSaveRequestDto;
 import com.ssafy.paginationpractice.domain.board.dto.BoardSaveResponseDto;
+import com.ssafy.paginationpractice.domain.board.entity.Board;
 import com.ssafy.paginationpractice.domain.board.service.BoardService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort.Direction;
 import org.springframework.data.web.PageableDefault;
@@ -44,6 +48,7 @@ public class BoardController {
     public ResponseEntity<?> findAll(
             @PageableDefault(size = 10, sort = "createdAt", direction = Direction.DESC) Pageable pageable
     ) {
-        boardService.findAll(pageable);
+        BoardPaginatedResponseDto<BoardPreviewDto> response = boardService.findAll(pageable);
+        return ResponseEntity.ok(response);
     }
 }

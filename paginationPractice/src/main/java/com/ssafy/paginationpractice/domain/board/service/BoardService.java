@@ -1,6 +1,7 @@
 package com.ssafy.paginationpractice.domain.board.service;
 
 import com.ssafy.paginationpractice.domain.board.dao.BoardDao;
+import com.ssafy.paginationpractice.domain.board.dto.BoardPaginatedResponseDto;
 import com.ssafy.paginationpractice.domain.board.dto.BoardPreviewDto;
 import com.ssafy.paginationpractice.domain.board.dto.BoardSaveRequestDto;
 import com.ssafy.paginationpractice.domain.board.dto.BoardSaveResponseDto;
@@ -54,7 +55,7 @@ public class BoardService {
     }
 
     @Transactional
-    public Page<BoardPreviewDto> findAll(Pageable pageable) {
+    public BoardPaginatedResponseDto<BoardPreviewDto> findAll(Pageable pageable) {
         Page<Board> boardPage = boardDao.findBoardWithPaging(pageable);
 
         List<Long> boardIds = boardPage.getContent()
@@ -67,11 +68,14 @@ public class BoardService {
         Map<Long, Board> boardMap = boardsWithComments.stream()
                 .collect(Collectors.toMap(Board::getId, b -> b));
 
-        return boardPage.map(board -> {
+        // Board에서 BoardPreviewDto로 변환
+        Page<BoardPreviewDto> previewDtoPage = boardPage.map(board -> {
             Board boardEntity = boardMap.get(board.getId());
             int commentCount = boardEntity.getComments().size();
             return BoardPreviewDto.from(board, commentCount);
         });
+
+        return BoardPaginatedResponseDto.from(previewDtoPage);
     }
 
 
