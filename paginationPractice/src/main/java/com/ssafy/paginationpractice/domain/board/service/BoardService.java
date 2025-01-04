@@ -1,10 +1,7 @@
 package com.ssafy.paginationpractice.domain.board.service;
 
 import com.ssafy.paginationpractice.domain.board.dao.BoardDao;
-import com.ssafy.paginationpractice.domain.board.dto.BoardPaginatedResponseDto;
-import com.ssafy.paginationpractice.domain.board.dto.BoardPreviewDto;
-import com.ssafy.paginationpractice.domain.board.dto.BoardSaveRequestDto;
-import com.ssafy.paginationpractice.domain.board.dto.BoardSaveResponseDto;
+import com.ssafy.paginationpractice.domain.board.dto.*;
 import com.ssafy.paginationpractice.domain.board.entity.Board;
 import com.ssafy.paginationpractice.domain.comment.dao.CommentDao;
 import com.ssafy.paginationpractice.domain.comment.entity.Comment;
@@ -13,7 +10,9 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -76,6 +75,43 @@ public class BoardService {
         });
 
         return BoardPaginatedResponseDto.from(previewDtoPage);
+    }
+
+    @Transactional(readOnly = true)
+    public BoardKeysetResponseDto<BoardPreviewDto> findAllByKeyset(Long lastId, int size) {
+        // Keyset 특성상, 정렬은 id DESC 고정
+        Pageable pageable = PageRequest.of(0, size, Sort.by(Sort.Direction.DESC, "id"));
+
+        // Board 엔티티 조회
+        List<Board> boards = boardDao.findBoardByKeyset(lastId, pageable);
+
+        // 1) 댓글 연관관계 로딩 (boardIds 따로 추출)
+        List<Long> boardIds = boards.stream()
+                .map(Board::getId)
+                .toList();
+
+        // 2) 한번에 comment fetch
+        List<Board> boardsWithComments = boardDao.findBoardWithCommentsByIds(boardIds);
+
+        // boardId -> Board 매핑
+        Map<Long, Board> boardMap = boardsWithComments.stream()
+                .collect(Collectors.toMap(Board::getId, b -> b));
+
+        // 3) DTO 변환
+        List<BoardPreviewDto> previewDtoList = boards.stream()
+                .map(b -> {
+                    Board boardEntity = boardMap.get(b.getId());
+                    int commentCount = boardEntity.getComments().size();
+                    return BoardPreviewDto.from(b, commentCount);
+                })
+                .toList();
+
+        boolean hasNext = (previewDtoList.size() == size);
+        Long nextLastId = previewDtoList.isEmpty()
+                ? null
+                : previewDtoList.get(previewDtoList.size()-1).boardId();
+
+        return BoardKeysetResponseDto.from(previewDtoList, hasNext, nextLastId);
     }
 
 

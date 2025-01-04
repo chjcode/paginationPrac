@@ -14,4 +14,15 @@ public interface BoardDao extends JpaRepository<Board, Long> {
 
     @Query("SELECT DISTINCT b FROM Board b LEFT JOIN FETCH b.comments WHERE b.id IN :boardIds")
     List<Board> findBoardWithCommentsByIds(@Param("boardIds") List<Long> boardIds);
+
+    @Query("""
+        SELECT b
+        FROM Board b
+        WHERE (:lastId IS NULL OR b.id < :lastId)
+        ORDER BY b.id DESC
+    """)
+    List<Board> findBoardByKeyset(
+            @Param("lastId") Long lastId,
+            Pageable pageable
+    );
 }

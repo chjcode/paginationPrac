@@ -15,7 +15,7 @@ public record BoardPaginatedResponseDto<T>(
         return new BoardPaginatedResponseDto<>(
                 page.getContent(),
                 page.getTotalPages(),
-                page.getTotalPages(),
+                page.getTotalElements(),
                 page.getNumber(),
                 page.getSize()
         );

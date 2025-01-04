@@ -1,9 +1,6 @@
 package com.ssafy.paginationpractice.domain.board.controller;
 
-import com.ssafy.paginationpractice.domain.board.dto.BoardPaginatedResponseDto;
-import com.ssafy.paginationpractice.domain.board.dto.BoardPreviewDto;
-import com.ssafy.paginationpractice.domain.board.dto.BoardSaveRequestDto;
-import com.ssafy.paginationpractice.domain.board.dto.BoardSaveResponseDto;
+import com.ssafy.paginationpractice.domain.board.dto.*;
 import com.ssafy.paginationpractice.domain.board.entity.Board;
 import com.ssafy.paginationpractice.domain.board.service.BoardService;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +10,8 @@ import org.springframework.data.domain.Sort.Direction;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -50,5 +49,16 @@ public class BoardController {
     ) {
         BoardPaginatedResponseDto<BoardPreviewDto> response = boardService.findAll(pageable);
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/find-keyset")
+    public ResponseEntity<?> findAllByKeyset(
+            @RequestParam(required = false) Long lastId,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        // Service 호출
+        BoardKeysetResponseDto<BoardPreviewDto> boards = boardService.findAllByKeyset(lastId, size);
+
+        return ResponseEntity.ok(boards);
     }
 }
